@@ -55,12 +55,45 @@ for (const example of examples) {
     assert.ok(unique.size > 1);
   });
 }
+
+// Estas definições não consultam produções: verificam a linguagem prometida
+// na descrição de cada exemplo, além da equivalência entre gramática e ER.
+const exampleLanguages = [
+  word => word.length >= 2 && word.endsWith('b') && [...word.slice(0, -1)].every(s => s === 'a'),
+  word => word.endsWith('01'),
+  word => [...word].filter(s => s === 'a').length % 2 === 0
+];
+examples.forEach((example, index) => {
+  test(`a gramática e a ER representam a definição: ${example.name}`, () => {
+    const grammar = parseGrammar(example);
+    const derived = enumerate(grammar, 7);
+    const regex = new RegExp(`^(?:${toRegex(grammar).javascript})$`, 'u');
+    for (const word of allWords(grammar.T, 7)) {
+      const expected = exampleLanguages[index](word);
+      assert.equal(derived.has(word), expected, `Gramática: ${JSON.stringify(word)}`);
+      assert.equal(regex.test(word), expected, `Expressão regular: ${JSON.stringify(word)}`);
+    }
+  });
+});
 test('gramáticas à esquerda, com múltiplos terminais e ciclos', () => {
   const grammar = parse('S ::= Sa | Ab | ε\nA ::= Sb | ab', 'S,A');
   assert.equal(grammar.direction, 'left'); compareLanguage(grammar, 7);
   const regex = new RegExp(`^(?:${toRegex(grammar).javascript})$`, 'u');
   for (let i = 0; i < 30; i++) assert.ok(regex.test(generate(grammar, { random: seeded(i) }).sentence));
   assert.equal(toRegex(parse('S ::= Sa | b')).expression, 'ba*');
+});
+
+test('a pilha preserva os sufixos pendentes em derivações à esquerda', () => {
+  const grammar = parse('S ::= Aab\nA ::= Ba\nB ::= b', 'S,A,B');
+  const result = generate(grammar, { random: () => 0 });
+  assert.equal(result.sentence, 'baab');
+  assert.deepEqual(result.derivations.map(d => d.form), ['Aab', 'Baab', 'baab']);
+  assert.deepEqual(result.trace.slice(1, 4).map(s => s.stack), [
+    ['A', 'a', 'b'], ['B', 'a', 'a', 'b'], ['b', 'a', 'a', 'b']
+  ]);
+  assert.ok(result.trace.slice(0, 4).every(s => s.output === ''));
+  assert.deepEqual(result.trace.at(-1).stack, []);
+  assert.equal(toRegex(grammar).expression, 'baab');
 });
 test('palavra vazia é diferente de linguagem vazia', () => {
   const epsilon = parse('S ::= ε', 'S', '');
@@ -84,6 +117,25 @@ test('limite força término mesmo quando o sorteio sempre escolhe a recursão',
   assert.equal(result.sentence, 'aaaab'); assert.equal(result.constrained, true);
   assert.throws(() => generate(parse('S ::= A\nA ::= b', 'S,A'), { maxDerivations: 1 }), /derivação mínima/);
 });
+
+test('o limite de derivações aceita os extremos e rejeita valores inválidos', () => {
+  const grammar = parse('S ::= a');
+  for (const maxDerivations of [1, 500]) {
+    assert.equal(generate(grammar, { maxDerivations }).sentence, 'a');
+  }
+  for (const maxDerivations of [0, -1, 501, 1.5, NaN, Infinity, -Infinity, '80', null]) {
+    assert.throws(() => generate(grammar, { maxDerivations }), /inteiro entre 1 e 500/);
+  }
+});
+
+test('a fonte aleatória respeita o intervalo de zero inclusive a um exclusive', () => {
+  const grammar = parse('S ::= a | b');
+  assert.equal(generate(grammar, { random: () => 0 }).sentence, 'a');
+  assert.equal(generate(grammar, { random: () => 1 - Number.EPSILON }).sentence, 'b');
+  for (const value of [-Number.EPSILON, 1, 1.1, NaN, Infinity, -Infinity, undefined]) {
+    assert.throws(() => generate(grammar, { random: () => value }), /fonte aleatória/);
+  }
+});
 test('limita o tamanho do histórico sem retornar uma sentença incompleta', () => {
   assert.throws(() => generate(parse(`S ::= ${'a'.repeat(39)}S | b`), { random: () => 0, maxDerivations: 500 }), /2.000 operações/);
   assert.throws(() => parse('S ::= →', 'S', '→'), /reservados/);
@@ -95,6 +147,17 @@ test('símbolos especiais de regex e Unicode são literais', () => {
     const regex = new RegExp(`^(?:${toRegex(grammar).javascript})$`, 'u');
     assert.equal(regex.test('a'), false);
   }
+});
+
+test('Unicode fora do plano básico funciona em terminais e não terminais', () => {
+  const grammar = parse('🧭 ::= 😀🧩 | ε\n🧩 ::= β🧭', '🧭,🧩', '😀,β', '🧭');
+  const values = [0, 0, .99];
+  const result = generate(grammar, { random: () => values.shift() });
+  assert.equal(result.sentence, '😀β');
+  assert.deepEqual(result.trace[1].stack, ['😀', '🧩']);
+  assert.deepEqual(result.derivations.map(d => d.form), ['😀🧩', '😀β🧭', '😀β']);
+  assert.deepEqual(result.trace.at(-1).stack, []);
+  compareLanguage(grammar, 5);
 });
 test('validação rejeita entradas que não definem a gramática regular suportada', () => {
   const invalid = [

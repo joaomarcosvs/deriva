@@ -4,51 +4,51 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Deriva · Gramáticas regulares</title>
+  <meta name="description" content="Laboratório de gramáticas regulares: geração de sentenças com pilha explícita e conversão para expressão regular.">
+  <title>Gramáticas regulares · TD1</title>
   <link rel="stylesheet" href="src/style.css">
   <script defer src="src/grammar.js"></script>
   <script defer src="src/app.js"></script>
 </head>
 <body>
-  <header class="header"><a class="brand" href="index.html"><span class="brand-icon">δ</span> deriva<span class="brand-dot">.</span></a><span class="course">LINGUAGENS FORMAIS & AUTÔMATOS <span class="badge">TD1</span></span></header>
+  <header class="header"><span class="course">LINGUAGENS FORMAIS & AUTÔMATOS <span class="badge">TD1</span></span></header>
   <main>
-    <div class="intro"><div><p class="eyebrow">LABORATÓRIO DE GRAMÁTICAS REGULARES</p><h1>Da gramática à sentença.</h1><p>Defina as regras. Acompanhe a pilha. Explore a linguagem.</p></div><span class="offline"><span></span> Local e offline</span></div>
+    <div class="intro"><div><p class="eyebrow">LABORATÓRIO DE GRAMÁTICAS REGULARES</p><h1>Da gramática à sentença.</h1><p>Defina as regras. Acompanhe a pilha. Explore a linguagem.</p></div></div>
     <div class="layout">
       <section class="card editor" aria-labelledby="editor-title">
-        <div class="section-heading"><span class="number">01</span><h2 id="editor-title">Sua gramática</h2><span class="math">G = {N, T, P, S}</span></div>
+        <div class="section-heading"><span class="number" aria-hidden="true">01</span><h2 id="editor-title">Sua gramática</h2><span class="math">G = (N, T, P, S)</span></div>
         <form id="grammar-form">
-          <label for="example">Comece com um exemplo</label><select id="example"></select><p id="example-description" class="hint description"></p>
-          <div class="pair"><div><label for="nonterminals">Não terminais <span>N</span></label><input id="nonterminals" value="S" required autocomplete="off" spellcheck="false"></div><div><label for="terminals">Terminais <span>T</span></label><input id="terminals" value="a, b" autocomplete="off" spellcheck="false"></div></div>
-          <p class="hint">Um caractere por símbolo. Separe os símbolos por vírgulas.</p>
+          <label for="example">Comece com um exemplo</label><select id="example" aria-describedby="example-description"></select><p id="example-description" class="hint description"></p>
+          <div class="pair"><div><label for="nonterminals">Não terminais <span>N</span></label><input id="nonterminals" value="S" required autocomplete="off" spellcheck="false" aria-describedby="symbols-hint"></div><div><label for="terminals">Terminais <span>T</span></label><input id="terminals" value="a, b" autocomplete="off" spellcheck="false" aria-describedby="symbols-hint"></div></div>
+          <p id="symbols-hint" class="hint">Um caractere por símbolo. Separe os símbolos por vírgulas.</p>
           <label for="start">Símbolo inicial <span>S</span></label><input id="start" value="S" required autocomplete="off" spellcheck="false">
           <div class="label-row"><label for="productions">Produções <span>P</span></label><button class="text-button" type="button" id="insert-epsilon" aria-label="Inserir palavra vazia nas produções">Inserir ε</button></div>
-          <textarea id="productions" rows="6" required spellcheck="false">S ::= aS | ab</textarea>
-          <p class="hint">Uma regra por linha: <code>S ::= aS | ab</code><br>Use <code>ε</code> para a palavra vazia e <code>|</code> para alternativas.</p>
-          <details class="settings"><summary>Opções de geração</summary><div class="pair"><div><label for="quantity">Sentenças</label><input id="quantity" type="number" value="5" min="1" max="30" required></div><div><label for="limit">Limite de derivações</label><input id="limit" type="number" value="80" min="1" max="500" required></div></div><p class="hint">Perto do limite, apenas regras que ainda permitem terminar são sorteadas. Sentenças podem se repetir.</p></details>
+          <textarea id="productions" rows="6" required spellcheck="false" aria-describedby="productions-hint">S ::= aS | ab</textarea>
+          <p id="productions-hint" class="hint">Uma regra por linha: <code>S ::= aS | ab</code><br>Use <code>ε</code> para a palavra vazia e <code>|</code> para alternativas.</p>
+          <details class="settings"><summary>Opções de geração</summary><div class="pair"><div><label for="quantity">Sentenças</label><input id="quantity" type="number" value="5" min="1" max="30" required aria-describedby="generation-hint"></div><div><label for="limit">Limite de derivações</label><input id="limit" type="number" value="80" min="1" max="500" required aria-describedby="generation-hint"></div></div><p id="generation-hint" class="hint">Perto do limite, apenas regras que ainda permitem terminar são sorteadas. Sentenças podem se repetir.</p></details>
           <button class="primary" type="submit">Gerar e analisar <span aria-hidden="true">→</span></button>
         </form>
-        <div id="status" class="status" role="status" aria-live="polite">Pronto para explorar o exemplo do slide.</div>
+        <div id="status" class="status" role="status" aria-live="polite" aria-atomic="true" tabindex="-1">Pronto para explorar o exemplo do slide.</div>
         <div id="warnings" class="warnings" hidden></div>
       </section>
       <div class="results">
         <section class="card sentence-card" aria-labelledby="sentences-title">
-          <div class="section-heading"><span class="number">02</span><h2 id="sentences-title">Sentenças geradas</h2><span id="direction" class="tag">Aguardando análise</span></div>
+          <div class="section-heading"><span class="number" aria-hidden="true">02</span><h2 id="sentences-title">Sentenças geradas</h2><span id="direction" class="tag">Aguardando análise</span></div>
           <p class="hint">Selecione uma sentença para inspecionar sua derivação.</p><div id="sentences" class="sentences"><p class="empty">A primeira sentença começa com uma regra.</p></div>
         </section>
         <section class="card trace-card" aria-labelledby="trace-title">
-          <div class="section-heading"><span class="number">03</span><h2 id="trace-title">Dentro da derivação</h2></div>
+          <div class="section-heading"><span class="number" aria-hidden="true">03</span><h2 id="trace-title">Dentro da derivação</h2></div>
           <div class="trace-layout"><div><div class="label-row"><h3>Pilha de símbolos</h3><span class="hint">Topo ↑</span></div><div id="stack" class="stack"><span class="empty">—</span></div></div><div class="step-detail"><p id="step-count" class="eyebrow">PASSO A PASSO</p><p id="step-action">Gere uma sentença para acompanhar o algoritmo.</p><div class="output-box"><span>Saída parcial</span><code id="partial-output">—</code></div><div class="playback"><button id="previous" type="button" class="secondary" disabled aria-label="Passo anterior">← Anterior</button><button id="next" type="button" class="secondary" disabled aria-label="Próximo passo">Próximo →</button><button id="last" type="button" class="text-button" disabled>Ver fim</button></div><input id="step-range" type="range" min="0" max="0" value="0" disabled aria-label="Passo da execução"></div></div>
           <div class="derivation"><h3>Derivação da sentença</h3><code id="derivation">S ⇒ …</code></div>
-          <details><summary>Histórico completo da pilha</summary><div class="table-scroll"><table><thead><tr><th>Passo</th><th>Operação</th><th>Pilha (topo → base)</th><th>Saída</th></tr></thead><tbody id="trace-body"></tbody></table></div></details>
+          <details><summary>Histórico completo da pilha</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Histórico da execução, com rolagem"><table><thead><tr><th scope="col">Passo</th><th scope="col">Operação</th><th scope="col">Pilha (topo → base)</th><th scope="col">Saída</th></tr></thead><tbody id="trace-body"></tbody></table></div></details>
         </section>
         <section class="card regex-card" aria-labelledby="regex-title">
-          <div class="section-heading"><span class="number">04</span><h2 id="regex-title">Expressão regular</h2><span class="tag">Linguagem completa</span></div>
+          <div class="section-heading"><span class="number" aria-hidden="true">04</span><h2 id="regex-title">Expressão regular</h2><span class="tag">Linguagem completa</span></div>
           <div id="regex" class="regex">—</div><p class="hint">A expressão descreve todas as sentenças da gramática. <code>|</code> = união · <code>*</code> = repetição · <code>ε</code> = palavra vazia · <code>∅</code> = linguagem vazia.</p>
           <details><summary>Como a expressão foi obtida</summary><p class="hint">A gramática é convertida em um autômato generalizado. Os estados são eliminados pela fórmula <code>Rᵢⱼ ← Rᵢⱼ | Rᵢₖ(Rₖₖ)*Rₖⱼ</code>, preservando a linguagem.</p><div id="regex-steps"></div></details>
         </section>
       </div>
     </div>
-    <footer><span>TD1 · Linguagens Formais e Autômatos</span><span>Pilha explícita · Sorteio de produções · Eliminação de estados</span></footer>
   </main>
 </body>
 </html>

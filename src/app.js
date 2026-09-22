@@ -11,6 +11,11 @@ function node(tag, text, className) {
 function setStatus(message, error = false) {
   $('status').textContent = message;
   $('status').classList.toggle('error', error);
+  if (error) $('status').focus();
+}
+function renderWarnings(messages) {
+  $('warnings').replaceChildren(...messages.map(message => node('p', message)));
+  $('warnings').hidden = messages.length === 0;
 }
 function clearResults() {
   results = []; grammar = null; selected = 0; step = 0;
@@ -44,7 +49,7 @@ function selectSentence(index) {
   const fragment = document.createDocumentFragment();
   for (const item of result.trace) {
     const row = node('tr');
-    for (const value of [item.step + 1, item.action + (item.production ? ` (${item.production})` : ''), item.stack.join(' · ') || '∅ (vazia)', item.output || 'ε']) row.append(node('td', value));
+    for (const value of [item.step + 1, item.action + (item.production ? ` (${item.production})` : ''), item.stack.join(' · ') || '[] (vazia)', item.output || 'ε']) row.append(node('td', value));
     fragment.append(row);
   }
   $('trace-body').replaceChildren(fragment);
@@ -72,11 +77,17 @@ $('previous').addEventListener('click', () => { if (step > 0) { step--; renderSt
 $('next').addEventListener('click', () => { if (results.length && step < results[selected].trace.length - 1) { step++; renderStep(); } });
 $('last').addEventListener('click', () => { if (results.length) { step = results[selected].trace.length - 1; renderStep(); } });
 $('step-range').addEventListener('input', () => { step = Number($('step-range').value); renderStep(); });
+// A validação nativa precisa conseguir focar campos dentro das opções recolhidas.
+$('grammar-form').addEventListener('invalid', event => {
+  const details = event.target.closest('details');
+  if (details) details.open = true;
+}, true);
 $('grammar-form').addEventListener('submit', event => {
   event.preventDefault(); clearResults();
   try {
     const quantity = Number($('quantity').value), maxDerivations = Number($('limit').value);
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 30) throw new Error('Escolha de 1 a 30 sentenças.');
+    if (!Number.isInteger(maxDerivations) || maxDerivations < 1 || maxDerivations > 500) throw new Error('O limite de derivações deve ser inteiro entre 1 e 500.');
     grammar = parseGrammar({ N: $('nonterminals').value, T: $('terminals').value, S: $('start').value, P: $('productions').value });
     $('direction').textContent = grammar.direction === 'right' ? 'Linear à direita' : 'Linear à esquerda';
     const warnings = [...grammar.warnings];
@@ -86,7 +97,9 @@ $('grammar-form').addEventListener('submit', event => {
       $('regex').textContent = regex.expression;
       $('regex-steps').append(node('h3', 'Equações da gramática'), node('pre', regex.equations.join('\n')));
       for (const item of regex.steps) $('regex-steps').append(node('h3', item.title), node('pre', item.transitions.join('\n') || 'Nenhuma transição: linguagem vazia.'));
-    } catch (error) { $('regex').textContent = 'Conversão excedeu o limite'; warnings.push(error.message); }
+    } catch (error) { $('regex').textContent = 'Conversão não concluída'; warnings.push(error.message); }
+    // Mesmo se a geração não couber no limite, a análise e seus avisos continuam válidos.
+    renderWarnings(warnings);
     if (Number.isFinite(grammar.minSteps.get(grammar.S))) {
       results = Array.from({ length: quantity }, () => generate(grammar, { maxDerivations }));
       $('sentences').replaceChildren();
@@ -97,12 +110,16 @@ $('grammar-form').addEventListener('submit', event => {
         button.addEventListener('click', () => selectSentence(i)); $('sentences').append(button);
       });
       if (results.some(r => r.constrained)) warnings.push('O limite restringiu o sorteio em pelo menos uma sentença para garantir o término.');
-      selectSentence(0); setStatus(`Gramática válida · ${quantity} sentença(s) gerada(s) com pilha.`);
+      selectSentence(0);
+      setStatus(`Gramática válida · ${quantity} ${quantity === 1 ? 'sentença gerada' : 'sentenças geradas'} com pilha.`);
     } else {
       $('sentences').replaceChildren(node('p', 'Linguagem vazia (∅): não existe sentença terminal a partir do símbolo inicial.', 'empty'));
       setStatus('Gramática regular válida, mas sem sentenças para gerar.');
     }
-    $('warnings').replaceChildren(...warnings.map(message => node('p', message))); $('warnings').hidden = !warnings.length;
-  } catch (error) { setStatus(error.message, true); }
+    renderWarnings(warnings);
+  } catch (error) {
+    $('sentences').replaceChildren(node('p', 'Nenhuma sentença gerada. Verifique a mensagem junto ao formulário.', 'empty'));
+    setStatus(error.message, true);
+  }
 });
 loadExample(0);

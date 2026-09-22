@@ -1,105 +1,113 @@
-# Deriva — TD1 de Linguagens Formais e Autômatos
+# Gramáticas regulares — TD1
 
-Programa com interface gráfica para cadastrar uma gramática regular `G = {N, T, P, S}`, gerar sentenças aleatórias usando uma **pilha explícita**, acompanhar a derivação e obter uma expressão regular da linguagem inteira.
+Trabalho de Desenvolvimento 1 (TD1) de **Linguagens Formais e Autômatos**, do curso de Ciência da Computação da UNESC. Professor: André Faria Ruaro.
 
-## Executar
+O programa recebe uma gramática regular, gera sentenças aleatórias com uma pilha e apresenta a derivação de cada sentença e uma expressão regular da linguagem.
 
-1. Abra a pasta do projeto.
-2. Dê dois cliques em **index.html**. Use um navegador atualizado, como Edge, Chrome ou Firefox.
-3. Selecione uma das três gramáticas e clique em **Gerar e analisar**.
-4. Clique em uma sentença e use **Próximo**, **Anterior**, a barra de passos ou **Ver fim**.
-5. Expanda o histórico da pilha e os passos da conversão para examinar o algoritmo.
+## 1. O que o trabalho pede
 
-O programa funciona sem internet, bibliotecas externas, instalação ou servidor. Os dados ficam apenas na memória da aba; recarregar restaura o exemplo inicial.
+Conforme o enunciado *Linguagens Formais — Aula 6 — TD01*, o programa deve receber `G = (N, T, P, S)`, em que `N` é o conjunto de não terminais, `T` é o conjunto de terminais, `P` é o conjunto de produções e `S` é o símbolo inicial.
 
-## Desenvolver no VS Code
+A solução deve considerar apenas gramáticas regulares, sortear produções para gerar sentenças, implementar a derivação com uma **pilha**, oferecer uma interface gráfica de entrada e resultados e retornar a expressão regular após a derivação. A entrega inclui o código-fonte e **três exemplos selecionáveis no próprio programa**.
 
-Abra esta pasta com **Arquivo → Abrir Pasta**. Edite os arquivos e recarregue `index.html` no navegador. A configuração de depuração incluída permite usar **F5 → Abrir programa no Edge**.
+## 2. Como executar
 
-Com Node.js 18 ou superior, também é possível usar o terminal do VS Code:
+1. Extraia a pasta completa do projeto, caso esteja em um ZIP.
+2. Abra **`index.html`** em um navegador atualizado.
+3. Escolha um exemplo ou preencha a gramática e clique em **Gerar e analisar**.
+4. Selecione uma sentença e use **Anterior**, **Próximo**, a barra de passos ou **Ver fim** para acompanhar a pilha e a saída.
+5. Expanda **Histórico completo da pilha** e **Como a expressão foi obtida** para consultar os registros dos algoritmos.
 
-```sh
-npm test
-npm start
-```
+O programa funciona localmente, sem internet, instalação ou bibliotecas externas. Os dados ficam na memória da aba; recarregar a página restaura o exemplo inicial.
 
-O primeiro comando executa os testes; o segundo abre um servidor local em `http://127.0.0.1:4173`. Não é necessário executar `npm install`. Node.js é opcional para usar o programa e necessário apenas para os testes e o servidor.
+## 3. Como foi resolvido
 
-## Requisitos do slide e implementação
+A implementação utiliza **HTML**, **CSS** e **JavaScript**. O núcleo de cálculo é independente da interface, permitindo testar os algoritmos diretamente.
 
-| Pedido | Onde foi atendido |
+| Arquivo | Responsabilidade |
 |---|---|
-| Entrada de G = {N, T, P, S} (p. 3) | Campos de não terminais, terminais, produções e símbolo inicial |
-| Gerar sentenças aleatórias (p. 3a) | Sorteio de alternativas em `generate`, quantidade configurável |
-| Executar o mecanismo de derivação (p. 3b, pp. 4–5) | Histórico de substituições e de operações da pilha |
-| Considerar apenas gramáticas regulares (p. 3c) | Validação em `parseGrammar`; orientação à direita ou à esquerda |
-| Usar uma pilha (p. 3d) | Array com operações `push` e `pop`; produção empilhada em ordem inversa |
-| Interface gráfica de entrada e resultados (p. 3e) | `index.html`, `src/style.css` e `src/app.js` |
-| Exemplos no programa (p. 3f) | Três opções no seletor da interface |
-| Analisar, transformar e retornar expressão regular (p. 3g, p. 6) | `toRegex`: autômato generalizado e eliminação de estados, com equações e etapas visíveis |
-| Entregar código-fonte e três exemplos selecionáveis (p. 7) | Pasta completa do projeto; veja `ENTREGA.md` |
+| `index.html` | Campos de `N`, `T`, `P` e `S`, exemplos e áreas de resultados. |
+| `src/grammar.js` | Validação, geração com pilha e conversão para expressão regular. |
+| `src/app.js` | Leitura dos campos, apresentação e navegação pelos passos. |
+| `src/style.css` | Aparência e adaptação a diferentes tamanhos de tela. |
+| `tests/` | Testes automatizados do núcleo e do servidor opcional. |
+| `serve.js` | Servidor local opcional para desenvolvimento. |
 
-O slide **não especifica** linguagem de programação, framework, prazo, plataforma de envio, nome do arquivo, relatório, vídeo, executável compilado ou trabalho em grupo. HTML, CSS e JavaScript são uma escolha desta implementação. Não se presume exigência adicional que não esteja no material.
+### Validação
 
-## Sintaxe e validação
+A função `parseGrammar` verifica se `N` e `T` são disjuntos, se `S` pertence a `N` e se todos os símbolos das produções foram declarados. Cada alternativa pode conter, no máximo, um não terminal, sempre em uma extremidade.
 
-- Cada símbolo de N e T tem **um caractere Unicode**. Separe os símbolos por vírgulas ou espaços; chaves externas são opcionais. Exemplo: `S, A` e `0, 1`.
-- N e T devem ser disjuntos; S deve pertencer a N. T pode ser vazio, por exemplo para `S ::= ε`.
-- Informe uma regra por linha. Aceita `::=`, `->` ou `→`. Separe alternativas por `|`.
-- Use `ε` sozinho para a palavra vazia. Não deixe alternativas em branco.
-- À direita: `A ::= wB | w`. À esquerda: `A ::= Bw | w`. `w` é uma sequência de terminais, inclusive vazia. Assim, produções unitárias `A ::= B` também são aceitas.
-- Não misture orientações na mesma gramática. São rejeitadas alternativas com dois não terminais ou um não terminal no meio, como `aSb`.
-- Espaços são separadores de formatação, não terminais. Símbolos de sintaxe são reservados; consulte a mensagem de validação.
-- Limites de uso: até 12 não terminais, 32 terminais, 100 alternativas, 40 símbolos por alternativa, 30 sentenças por execução e 500 substituições por sentença. Esses limites são escolhas de proteção da interface, não exigências do slide.
-- A expressão pode crescer exponencialmente. A conversão avisa se ultrapassar 50 mil caracteres de notação ou 100 mil na representação JavaScript. A geração continua disponível.
-- Cada sentença tem um limite adicional de 2.000 operações registradas de pilha para proteger a memória. Se excedido, o programa solicita reduzir o limite de derivações ou o tamanho das produções; não apresenta uma palavra incompleta como resultado.
-
-## Os três exemplos
-
-1. **Exemplo do slide:** `N = {S}`, `T = {a,b}`, inicial `S`, `S ::= aS | ab`. Linguagem de uma ou mais letras `a`, seguidas de `b`. Expressão obtida: `a*ab`. A escolha das produções 1, 1 e 2 produz `S ⇒ aS ⇒ aaS ⇒ aaab`.
-2. **Binárias terminadas em 01:** `N = {S,A}`, `T = {0,1}`, inicial `S`, `S ::= 0S | 1S | 0A` e `A ::= 1`. Linguagem descrita por `(0|1)*01`.
-3. **Quantidade par de a:** `N = {S,A}`, `T = {a,b}`, inicial `S`, `S ::= bS | aA | ε` e `A ::= bA | aS`. Aceita a palavra vazia e palavras com número par de `a`, com `b` em qualquer posição. Uma expressão equivalente é `b*(ab*ab*)*`.
-
-Expressões regulares equivalentes podem ter textos diferentes. A eliminação de estados não promete a menor expressão possível. A notação exibida usa `|` para união (o slide também usa `+` nas equações), concatenação por justaposição, `*` para fecho de Kleene, `ε` para palavra vazia e `∅` para linguagem vazia. Uma barra invertida antes de um metacaractere indica um terminal literal.
-
-## Como o algoritmo funciona
+São aceitas regras lineares à direita, como `A → wB`, ou à esquerda, como `A → Bw`, além de `A → w`. Aqui, `w` é uma sequência de terminais, que pode ser vazia. A mesma gramática não pode misturar as duas orientações. Uma regra como `S → aSb` é rejeitada.
 
 ### Derivação com pilha
 
-1. Coloque S na pilha. No array, o último elemento é o topo; na interface, o topo aparece primeiro.
-2. Retire o topo com `pop`.
-3. Se for terminal, acrescente-o à saída.
-4. Se for não terminal, sorteie uma produção aplicável. Empilhe seu lado direito **de trás para frente**, usando `push`, para que o símbolo mais à esquerda fique no topo.
-5. Repita até esvaziar a pilha. Em uma produção ε, nada é empilhado.
+A função `generate` utiliza um array como pilha, com operações explícitas `push` e `pop`:
 
-A forma sentencial em cada substituição é a saída já consumida seguida pela pilha do topo à base. O registro preserva cópias da pilha para mostrar o histórico corretamente. Não se usa recursão da linguagem de programação para substituir a pilha exigida.
+1. Empilha o símbolo inicial.
+2. Retira o topo. Se for terminal, acrescenta-o à saída.
+3. Se for não terminal, sorteia uma produção e empilha seu lado direito **em ordem inversa**, deixando o símbolo mais à esquerda no topo.
+4. Repete até esvaziar a pilha. Para uma produção `ε`, nada é empilhado.
 
-Antes do sorteio, um cálculo por ponto fixo encontra o menor número de substituições de cada não terminal até uma palavra terminal. Ramos improdutivos são excluídos. A escolha é uniforme entre as alternativas que conseguem terminar dentro do orçamento restante. Perto do limite, isso pode restringir o sorteio, e a interface informa quando ocorreu. **Não há promessa de distribuição uniforme sobre todas as palavras**, e palavras repetidas são permitidas.
+Cada operação registra uma cópia da pilha e da saída. Após cada substituição, a forma sentencial é a saída já produzida seguida dos símbolos pendentes, do topo à base. Esses registros permitem acompanhar a execução na interface.
 
-Se S for improdutivo, a linguagem é vazia: o resultado é `∅` e nenhuma sentença é inventada. Símbolos improdutivos e inalcançáveis produzem avisos.
+Para garantir o término, `parseGrammar` calcula o menor número de substituições necessário para cada não terminal alcançar uma palavra terminal, atualizando os valores até estabilizarem. O sorteio considera apenas produções capazes de terminar dentro do limite restante. Ramos improdutivos são descartados, e a interface avisa quando o limite restringe as escolhas. As produções elegíveis têm a mesma chance; isso **não significa distribuição uniforme entre todas as palavras**. Repetições são permitidas.
 
-### Gramática para expressão regular
+### Conversão para expressão regular
 
-Na orientação à direita, a produção `A → wB` vira a aresta `A → B` rotulada por `w`; `A → w` aponta para um estado final novo. Uma entrada nova aponta para S por ε.
+A função `toRegex` transforma a gramática em um autômato generalizado, cujas transições são rotuladas por expressões regulares. Na orientação à direita, `A → wB` cria uma transição de `A` para `B`, e `A → w` leva ao estado final. Na orientação à esquerda, `A → Bw` cria uma transição de `B` para `A`, e `A → w` parte da entrada para `A`; o símbolo inicial da gramática leva ao estado final.
 
-Na orientação à esquerda, `A → Bw` vira a aresta `B → A` rotulada por `w`; `A → w` vira uma aresta da entrada nova para A. S aponta para o estado final novo por ε. Isso preserva a ordem dos terminais da linguagem.
-
-O algoritmo elimina cada não terminal `k`, atualizando as arestas entre estados restantes com:
+Cada estado não terminal `k` é eliminado pela atualização:
 
 ```text
-R(i,j) = R(i,j) | R(i,k) (R(k,k))* R(k,j)
+R(i,j) ← R(i,j) | R(i,k)(R(k,k))*R(k,j)
 ```
 
-A expressão da entrada até a saída final descreve a linguagem completa, independentemente das palavras sorteadas. O slide exemplifica resolução de equações; a implementação usa eliminação de estados, mostra as equações originais e as etapas da transformação. Não existe chamada de biblioteca externa para realizar a conversão.
+A atualização conserva os caminhos existentes e acrescenta aqueles que passam por `k`. A expressão restante entre a entrada e a saída descreve a **linguagem completa**, independentemente das sentenças sorteadas. A interface apresenta as equações e as transições após cada eliminação. A conversão foi implementada sem bibliotecas externas.
 
-## Arquivos e testes
+## 4. Exemplos e resultados
 
-- `index.html`: interface e campos de G.
-- `src/grammar.js`: exemplos, análise, geração com pilha e conversão para ER.
-- `src/app.js`: ligação entre campos, resultados e controles de navegação.
-- `src/style.css`: apresentação responsiva.
-- `tests/grammar.test.js`: testes com o executor nativo do Node.js.
-- `serve.js`: servidor opcional, restrito ao computador local.
-- `ENTREGA.md`: checklist e roteiro de demonstração.
+Os três exemplos estão disponíveis no seletor. As expressões abaixo são as retornadas pelo programa. As palavras da tabela ilustram cada linguagem; a amostra sorteada varia a cada execução.
 
-Os testes reproduzem o exemplo do slide, verificam a ordem da pilha, gramáticas à esquerda, ε, linguagem vazia, ciclos, símbolos especiais, entradas inválidas e término limitado. Um oráculo independente enumera formas sentenciais e compara as palavras com a ER para os exemplos e 60 gramáticas pequenas geradas deterministicamente. Essa comparação é limitada aos comprimentos descritos nos testes; não substitui a justificativa matemática da transformação.
+| Exemplo | Conjuntos e produções | Expressão obtida | Palavras da linguagem | Palavras fora da linguagem |
+|---|---|---|---|---|
+| **1. Exemplo do enunciado** | `N = {S}`, `T = {a,b}`<br>`S ::= aS \| ab` | `a*ab` | `ab`, `aab`, `aaab` | `ε`, `b`, `aba` |
+| **2. Binárias terminadas em 01** | `N = {S,A}`, `T = {0,1}`<br>`S ::= 0S \| 1S \| 0A`<br>`A ::= 1` | `(0\|1)*01` | `01`, `001`, `101` | `ε`, `0`, `10` |
+| **3. Quantidade par de a** | `N = {S,A}`, `T = {a,b}`<br>`S ::= bS \| aA \| ε`<br>`A ::= bA \| aS` | `(b\|ab*a)*` | `ε`, `b`, `aa`, `abba` | `a`, `ab`, `aaa` |
+
+Em todos os exemplos, o símbolo inicial é `S`. No terceiro, cada bloco é um `b` isolado ou um par de `a` com zero ou mais `b` entre eles; por isso, a quantidade de `a` é sempre par.
+
+No primeiro exemplo, escolher as produções **1, 1 e 2** reproduz o resultado do enunciado:
+
+```text
+Produções:  1. S → aS     2. S → ab
+Derivação:  S ⇒ aS ⇒ aaS ⇒ aaab
+Sentença:   aaab
+Expressão:  a*ab
+```
+
+`|` representa união, a justaposição representa concatenação e `*` representa zero ou mais repetições. **`ε` é a palavra vazia; `∅` é a linguagem sem nenhuma palavra.** Expressões diferentes podem ser equivalentes; a eliminação de estados não garante a expressão mais curta.
+
+### Verificação
+
+A suíte contém **24 testes, todos aprovados na validação desta versão**.
+
+Com **Node.js 18 ou superior**, execute na pasta do projeto:
+
+```sh
+npm test
+```
+
+Os testes verificam a pilha, o exemplo do enunciado, as definições das três linguagens, gramáticas à esquerda, palavra e linguagem vazias, ciclos, limites, entradas inválidas e Unicode. A expressão obtida é comparada com uma enumeração independente de derivações: até sete símbolos para os três exemplos e até quatro símbolos para 60 gramáticas pequenas geradas com uma semente fixa. Essas verificações têm alcance finito; a preservação da linguagem decorre da transformação descrita acima.
+
+Não é necessário executar `npm install`. Para usar o servidor opcional, execute `npm start` e acesse `http://127.0.0.1:4173`. Node.js é necessário apenas para os testes e o servidor; abrir `index.html` não depende dele.
+
+## 5. Entrada e limites
+
+- Use um caractere Unicode por símbolo. Separe `N` e `T` por vírgulas ou espaços; chaves são opcionais.
+- Escreva uma produção por linha, com `::=`, `->` ou `→`, e alternativas separadas por `|`. Use `ε` sozinho para a palavra vazia. Espaços são apenas formatação.
+- `ε`, `∅`, `|`, `:`, `=`, `>`, `→` e chaves são reservados. Na expressão regular, uma barra invertida indica um metacaractere tratado como terminal literal.
+- Limites: 12 não terminais, 32 terminais, 100 alternativas, 40 símbolos por alternativa, 30 sentenças por execução, 500 substituições e 2.000 registros de pilha por sentença.
+- A conversão admite até 50 mil caracteres de notação e 100 mil na representação JavaScript. Limites excedidos são informados; uma sentença incompleta nunca é apresentada como resultado.
+
+Os limites protegem a interface. Se o símbolo inicial não puder gerar uma palavra terminal, a linguagem é `∅` e nenhuma sentença será gerada. Não terminais improdutivos ou inalcançáveis são indicados nos avisos.
+
